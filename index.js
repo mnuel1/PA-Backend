@@ -1,24 +1,26 @@
 const express = require('express');
 const app = express();
-
 const morgan = require('morgan');
 const cors = require('cors');
+
+// CONTROLLERS
+const userController = require('./src/controllers/UserController')
+const verificationController = require('./src/controllers/VerificationController')
 
 const connection = require('./src/configs/connection');
 require('dotenv').config();
 
-const port = process.env.PORT || 4000; // Use process.env to access environment variables
+app.use(morgan('tiny'));
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+const port = process.env.PORT || 4000; 
 
 
-// Check database connection
-connection
-  .query('SELECT NOW() as now')
-  .then(result => {
-    console.log('Connected to PostgreSQL database at:', result.rows[0].now);
-  })
-  .catch(error => {
-    console.error('Error connecting to PostgreSQL database', error);
-  });
+app.post('/register', userController.Register);
+
+app.patch('/verify',verificationController.Verified);
 
 
 app.get('/', (req, res) => {
