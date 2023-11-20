@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const Register = expressAsyncHandler(async (req, res) => {
 
-    const { username, email, password, fullname, employment_id, office } = req.body;
+    const { username, email, contact, password, fullname, employment_id, office } = req.body;
     
     validateUserData(req, res, async () => {
         try {
@@ -15,8 +15,8 @@ const Register = expressAsyncHandler(async (req, res) => {
 
             connection.query(
                 `INSERT INTO pa_admin (username, email, password, fullname,
-                employment_id, office, image) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [username, email, hashedPassword, fullname, employment_id, office],
+                employment_id, office, contact, image, verify) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [username, email, hashedPassword, fullname, employment_id, office, contact],
                 (err, result) => {
                     if (err) {
                         console.error('Error inserting user:', err);
