@@ -11,9 +11,12 @@ const validateUserData = (req, res, next) => {
         return res.status(400).json({ title: 'Validation Error', message: 'Username must be between 3 and 50 characters' });
     }
 
-    if (!validator.isLength(password, { min: 8, max: 20 })) {
-        return res.status(400).json({ title: 'Validation Error', message: 'Password must be between 8 and 20 characters' });
+    if (typeof password !== 'undefined') {
+        if (!validator.isLength(password, { min: 8, max: 20 })) {
+            return res.status(400).json({ title: 'Validation Error', message: 'Password must be between 8 and 20 characters' });
+        }
     }
+    
 
     // type here the additional validation
     // if needed
