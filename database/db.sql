@@ -10,6 +10,7 @@ CREATE TABLE pa_admin (
   image BYTEA DEFAULT NULL
 );
 
+
 CREATE TABLE pa_users (
   id SERIAL PRIMARY KEY,
   username VARCHAR(50) UNIQUE NOT NULL,
@@ -21,3 +22,16 @@ CREATE TABLE pa_users (
   office varchar(50) NOT NULL,
   image BYTEA DEFAULT NULL
 );
+
+
+CREATE TABLE pa_users_notification (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  message TEXT NOT NULL,
+  read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES pa_users(id) ON DELETE CASCADE
+);
+
+
+

@@ -1,11 +1,9 @@
 const expressAsyncHandler = require('express-async-handler');
 const connection = require('../configs/connection');
-const { log } = require('console');
 require('dotenv').config();
 
 const Verified = expressAsyncHandler(async (req, res) => {
     const { user_id, verify } = req.body;
-
    
     connection.query('UPDATE pa_users SET verify = $1 WHERE id = $2', [verify, user_id], (err, result) => { 
         if (err) {                   
