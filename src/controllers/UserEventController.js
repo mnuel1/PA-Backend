@@ -52,4 +52,3 @@ module.exports = {
     viewParticipants
 }
 
-//     const {title, description, dateTime, location, reminder} = req.body;

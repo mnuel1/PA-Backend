@@ -8,6 +8,7 @@ const userController = require('./src/controllers/UserController')
 const verificationController = require('./src/controllers/VerificationController')
 const notificationController = require('./src/controllers/NotificationController')
 const userEventController = require('./src/controllers/UserEventController')  
+const adminEventController = require('./src/controllers/AdminEventController') 
 
 const connection = require('./src/configs/connection');
 require('dotenv').config();
@@ -51,6 +52,13 @@ app.get('/getNotifications',notificationController.retrieveNotification);
 
 app.get('/getEvents',userEventController.viewEvents);
 app.get('/getParticipant',userEventController.viewParticipants);
+
+app.post('/createEvent',adminEventController.createEvent);
+app.patch('/editEvent',adminEventController.editEvent);
+app.delete('/deleteEvent',adminEventController.deleteEvent);
+
+app.post('/addParticipant',adminEventController.addParticipant);
+app.delete('/removeParticipant',adminEventController.removeParticipant);
 
 
 app.get('/', (req, res) => {
