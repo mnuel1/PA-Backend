@@ -7,6 +7,7 @@ const cors = require('cors');
 const userController = require('./src/controllers/UserController')
 const verificationController = require('./src/controllers/VerificationController')
 const notificationController = require('./src/controllers/NotificationController')
+const userEventController = require('./src/controllers/UserEventController')  
 
 const connection = require('./src/configs/connection');
 require('dotenv').config();
@@ -48,7 +49,8 @@ app.post('/sendNotification',notificationController.sendNotification);
 app.patch('/setNotifRead',notificationController.modifyNotification);
 app.get('/getNotifications',notificationController.retrieveNotification);
 
-app
+app.get('/getEvents',userEventController.viewEvents);
+app.get('/getParticipant',userEventController.viewParticipants);
 
 
 app.get('/', (req, res) => {
