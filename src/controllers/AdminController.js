@@ -1,6 +1,8 @@
 const expressAsyncHandler = require('express-async-handler');
 const connection = require('../configs/connection');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
 const { validateUserData } = require('../middlewares/ValidateUserData');
 require('dotenv').config();
 
@@ -33,5 +35,27 @@ const Register = expressAsyncHandler(async (req, res) => {
     });
 })
 
+const AdminLogin = expressAsyncHandler(async (req, res) => {
+    const { username, password, checked } = req.body;
+    connection.query('SELECT * FROM pa_admin WHERE username = $1 AND password = $2', [username, password], (err, result) => {        
+        if(err){
+            res.status(500).json({title: 'Internal Error', message: err.message});
+        }
+        if(result.rows.length > 0){
+            const { id, fullname} = result.rows[0]; // Assuming the primary key is named 'id'
+            const token = jwt.sign(
+                {username: username, user_id: id, fullname: fullname, role: 'admin'},
+                process.env.JWT_TOKEN,
+                {expiresIn: checked ? '1d': '7d'}
+            )
+            res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, fullname: fullname, role: 'admin'});
+        
+        }else{
+            res.status(401).json({title: "Login Error" ,message: "Credentials Incorrect"})
+        }
+    })
+})
 
-module.exports = { Register };
+
+
+module.exports = { Register, AdminLogin };

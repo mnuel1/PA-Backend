@@ -2,7 +2,7 @@ const expressAsyncHandler = require('express-async-handler');
 const connection = require('../configs/connection');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
-
+const jwt = require('jsonwebtoken');
 const { validateUserData } = require('../middlewares/ValidateUserData');
 require('dotenv').config();
 
@@ -29,8 +29,8 @@ const Register = expressAsyncHandler(async (req, res) => {
 
             connection.query(
                 `INSERT INTO pa_users (username, email, password, fullname,
-                employment_id, office, contact, image, verify) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [username, email, hashedPassword, fullname, employment_id, office, contact],
+                employment_id, office, contact, image, verify) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                [username, email, hashedPassword, fullname, employment_id, office, contact,null,false],
                 (err, result) => {
                     if (err) {
                         console.error('Error inserting user:', err);
@@ -46,6 +46,28 @@ const Register = expressAsyncHandler(async (req, res) => {
         }
     });
 })
+
+const Login = expressAsyncHandler(async (req, res) => {
+    const { username, password, checked } = req.body;
+    connection.query('SELECT * FROM pa_users WHERE username = $1 AND password = $2', [username, password], (err, result) => {        
+        if(err){
+            res.status(500).json({title: 'Internal Error', message: err.message});
+        }
+        if(result.rows.length > 0){
+            const { id, fullname} = result.rows[0]; // Assuming the primary key is named 'id'
+            const token = jwt.sign(
+                { username: username, user_id: id, fullname: fullname, role: 'user' },
+                process.env.JWT_TOKEN,
+                {expiresIn: checked ? '1d': '7d'}
+            )
+            res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, fullname: fullname, role: 'user'});
+        
+        }else{
+            res.status(401).json({title: "Login Error" ,message: "Credentials Incorrect"})
+        }
+    })
+})
+
 
 const retrieveUsers = expressAsyncHandler(async (req, res) => {
 
@@ -104,6 +126,7 @@ const editUser = expressAsyncHandler(async (req, res) => {
 
 module.exports = { 
     Register,
+    Login,
     retrieveUsers,
     editUser,
 };

@@ -5,6 +5,7 @@ const cors = require('cors');
 
 // CONTROLLERS
 const userController = require('./src/controllers/UserController')
+const adminController = require('./src/controllers/AdminController')
 const verificationController = require('./src/controllers/VerificationController')
 const notificationController = require('./src/controllers/NotificationController')
 const userEventController = require('./src/controllers/UserEventController')  
@@ -38,8 +39,9 @@ app.post('/upload', upload.single('file'), (req, res) => {
   res.json({ message: 'File uploaded successfully' });
 });
 
+app.post('/adminlogin',adminController.AdminLogin)
 
-
+app.post('/userlogin',userController.Login)
 app.post('/register', userController.Register);
 app.get('/getUsers',userController.retrieveUsers);
 app.patch('/editUser',userController.editUser);
