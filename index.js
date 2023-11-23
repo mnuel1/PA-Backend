@@ -40,10 +40,12 @@ app.post('/upload', upload.single('file'), (req, res) => {
 });
 
 app.post('/adminlogin',adminController.AdminLogin)
+app.patch('/editAdmin',adminController.editAdmin);
 
 app.post('/userlogin',userController.Login)
 app.post('/register', userController.Register);
-app.get('/getUsers',userController.retrieveUsers);
+app.get('/retrieveVUsers',userController.retrieveVerifiedUsers);
+app.get('/retrieveNVUsers',userController.retrieveNotVerifiedUsers);
 app.patch('/editUser',userController.editUser);
 
 app.patch('/verify',verificationController.Verified);
@@ -61,7 +63,6 @@ app.delete('/deleteEvent',adminEventController.deleteEvent);
 
 app.post('/addParticipant',adminEventController.addParticipant);
 app.delete('/removeParticipant',adminEventController.removeParticipant);
-
 
 app.get('/', (req, res) => {
   res.send('Hello, World!');

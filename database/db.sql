@@ -35,12 +35,11 @@ CREATE TABLE pa_users_notification (
   FOREIGN KEY (user_id) REFERENCES pa_users(id) ON DELETE CASCADE
 );
 
-
 CREATE TABLE pa_events (
   id SERIAL PRIMARY KEY,
-  title VARCHAR(100),
+  event VARCHAR(100),
   description VARCHAR(500),
-  dateNTime TIMESTAMP NOT NULL,
+  dateTime TIMESTAMP NOT NULL,
   location VARCHAR(100),
   reminder TIMESTAMP NOT NULL
 )

@@ -4,7 +4,7 @@ require('dotenv').config();
 
 
 const viewEvents = expressAsyncHandler(async (req, res) => {
-   
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     try {
         const queryResult = await connection.query(`SELECT * FROM pa_events`);
         

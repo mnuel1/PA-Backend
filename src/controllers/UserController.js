@@ -69,7 +69,29 @@ const Login = expressAsyncHandler(async (req, res) => {
 })
 
 
-const retrieveUsers = expressAsyncHandler(async (req, res) => {
+const retrieveVerifiedUsers = expressAsyncHandler(async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+
+    
+    try {
+        const queryResult = await connection.query(`SELECT * FROM pa_users WHERE verify = $1`, [true]);
+        
+        if (queryResult.rows) {
+            const users = queryResult.rows;
+            res.status(200).json({ title: 'Success', users });
+        } else {
+            res.status(500).json({ title: 'Something went wrong.', message: 'Please try again later.' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ title: 'Internal Error', message: 'Failed to fetch users.' });
+    }
+    
+    
+})
+
+const retrieveNotVerifiedUsers = expressAsyncHandler(async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
 
     try {
         const queryResult = await connection.query(`SELECT * FROM pa_users WHERE verify = $1`, [false]);
@@ -95,11 +117,14 @@ const editUser = expressAsyncHandler(async (req, res) => {
     upload.single('image')(req, res, async (err) => {
         if (err) {
             return res.status(500).json({ title: 'Internal Error', message: 'Image upload failed.' });
+        } else {
+            console.log('there it is');
         }
 
-        const { user_id, username, email, contact } = req.body;
+        const { user_id, username, email, contact, } = req.body;
         const imagePath = req.file ? req.file.path : null; // Assuming you named the input field 'image'
 
+        
         validateUserData(req, res, async () => {
             try {
                 connection.query(
@@ -127,6 +152,7 @@ const editUser = expressAsyncHandler(async (req, res) => {
 module.exports = { 
     Register,
     Login,
-    retrieveUsers,
+    retrieveNotVerifiedUsers,
+    retrieveVerifiedUsers,
     editUser,
 };
