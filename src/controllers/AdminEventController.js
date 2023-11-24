@@ -13,8 +13,7 @@ const addParticipant = expressAsyncHandler(async (req, res) => {
     const user_idPlaceholders = user_idsArray.map((_, index) => `($${index + 1}, $${user_idsArray.length + 1})`).join(', ');
 
     const queryValues = [].concat(...user_idsArray, event_id);
-
-    // Construct and execute the INSERT query
+    
     connection.query(
         `INSERT INTO pa_users_events (user_id, event_id) VALUES ${user_idPlaceholders}`,
         queryValues,
@@ -29,6 +28,42 @@ const addParticipant = expressAsyncHandler(async (req, res) => {
     );
 });
 
+const updateParticipant = expressAsyncHandler (async (req, res) => {
+
+    const { user_ids, event_id } = req.body;
+    const user_idsArray = user_ids.split(',').map(id => id.trim());
+
+    try {
+        // Begin the transaction
+        await connection.query('BEGIN');
+      
+        // Step 1: Delete existing records for the given event_id
+        await connection.query('DELETE FROM pa_users_events WHERE event_id = $1', [event_id]);
+      
+        // Step 2: Insert new records based on the provided user_ids and event_id
+        const user_idPlaceholders = user_idsArray.map((_, index) => `($${index + 1}, $${user_idsArray.length + 1})`).join(', ');
+        const queryValues = [].concat(...user_idsArray, event_id);
+      
+        await connection.query(
+          `INSERT INTO pa_users_events (user_id, event_id) VALUES ${user_idPlaceholders}`,
+          queryValues
+        );
+      
+        // Commit the transaction if everything is successful
+        await connection.query('COMMIT');
+      
+        res.status(200).json({ title: 'Success', message: 'Participants updated successfully' });
+
+      } catch (error) {
+
+        await connection.query('ROLLBACK');
+        console.error('Error updating participants:', error);
+        res.status(500).json({ title: 'Error', message: 'Failed to update participants. Please try again later.' });
+      }
+
+
+});
+  
 
 const removeParticipant = expressAsyncHandler(async (req,res) => {
 
@@ -81,18 +116,25 @@ const createEvent = expressAsyncHandler(async (req, res) => {
 
 const editEvent = expressAsyncHandler(async (req,res) => {
 
-    const {event_id, title, description, dateTime, location, reminder} = req.body;
+    const {event_id, event, description, dateTime, location, reminder, participants} = req.body;
 
     connection.query(`UPDATE pa_events 
     SET event = $2, description = $3, dateTime = $4, 
-    location = $5, reminder = $6 WHERE id = $1`, 
-    [event_id, title, description, dateTime, location, reminder],
+    location = $5, reminder = $6 WHERE id = $1 RETURNING id`, 
+    [event_id, event, description, dateTime, location, dateTime],
         (err,result) => {
             if (err) {
                 console.error('Error inserting event:', err);
                 res.status(500).json({ title: 'Something went wrong', message: 'Edit failed. Please try again later.' });
             } else {
-                res.status(200).json({ title: 'Success', message: 'Edit done' });
+                
+                if (result.rows.length > 0) {
+                    const { id } = result.rows[0];                                
+                    res.status(200).json({ title: 'Success', message: 'Edit done', id });
+                } else {
+                    console.error('Unexpected result:', result);
+                    res.status(500).json({ title: 'Unexpected Error', message: 'An unexpected error occurred. Please try again later.' });
+                }
             }
     })
 })
@@ -125,5 +167,5 @@ const deleteEvent = expressAsyncHandler(async (req,res) => {
 
 module.exports = {
     createEvent, editEvent, deleteEvent,     
-    addParticipant, removeParticipant
+    addParticipant, updateParticipant, removeParticipant
 }

@@ -62,6 +62,7 @@ app.patch('/editEvent',adminEventController.editEvent);
 app.delete('/deleteEvent',adminEventController.deleteEvent);
 
 app.post('/addParticipant',adminEventController.addParticipant);
+app.put('/updateParticipants',adminEventController.updateParticipant)
 app.delete('/removeParticipant',adminEventController.removeParticipant);
 
 app.get('/', (req, res) => {

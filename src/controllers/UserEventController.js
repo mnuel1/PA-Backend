@@ -21,24 +21,25 @@ const viewEvents = expressAsyncHandler(async (req, res) => {
 })
 
 const viewParticipants = expressAsyncHandler(async (req, res) => {
-    
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     try {
-        const { eventId } = req.body; // Assuming eventId is passed in the URL parameters
-
-        // Use INNER JOIN to get users assigned to a specific event
+        const { event_id } = req.query; // Assuming event_id is passed in the URL parameters
+       
         const queryResult = await connection.query(`
             SELECT u.*
             FROM pa_users u
             INNER JOIN pa_users_events ue ON u.id = ue.user_id
             WHERE ue.event_id = $1
-        `, [eventId]);
-        
+        `, [event_id]);
+        console.log(queryResult.rows);
         if (queryResult.rows) {
+            // console.log(queryResult);
             const users = queryResult.rows;
             res.status(200).json({ title: 'Success', users });
         } else {
             res.status(500).json({ title: 'Something went wrong.', message: 'Please try again later.' });
         }
+     
     } catch (error) {
         console.error(error);
         res.status(500).json({ title: 'Something went wrong', message: 'Failed to fetch participants.' });
