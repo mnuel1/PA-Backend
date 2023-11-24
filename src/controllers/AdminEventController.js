@@ -142,8 +142,9 @@ const editEvent = expressAsyncHandler(async (req,res) => {
 const deleteEvent = expressAsyncHandler(async (req,res) => {
     
     try {
-        const { event_id } = req.body;
+        const { event_id } = req.query;
 
+        console.log(event_id);
         // Delete the event from pa_events table
         const deleteEventResult = await connection.query(`
             DELETE FROM pa_events
