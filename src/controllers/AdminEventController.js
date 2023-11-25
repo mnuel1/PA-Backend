@@ -90,11 +90,10 @@ const removeParticipant = expressAsyncHandler(async (req,res) => {
 })
 
 const createEvent = expressAsyncHandler(async (req, res) => {
-    const { event, description, dateTime, location, reminder, participants } = req.body;
-
+    const { event, description, datetime, location, reminder, participants } = req.body;    
     connection.query(
         `INSERT INTO pa_events (event, description, dateTime, location, reminder) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-        [event, description, dateTime, location, dateTime],
+        [event, description, datetime, location, datetime],
         (err, result) => {
             if (err) {
                 console.error('Error inserting event:', err);
