@@ -115,12 +115,12 @@ const createEvent = expressAsyncHandler(async (req, res) => {
 
 const editEvent = expressAsyncHandler(async (req,res) => {
 
-    const {event_id, event, description, dateTime, location, reminder, participants} = req.body;
-
+    const {id, event, description, datetime, location, reminder, participants} = req.body;
+    
     connection.query(`UPDATE pa_events 
-    SET event = $2, description = $3, dateTime = $4, 
+    SET event = $2, description = $3, datetime = $4, 
     location = $5, reminder = $6 WHERE id = $1 RETURNING id`, 
-    [event_id, event, description, dateTime, location, dateTime],
+    [id, event, description, datetime, location, datetime],
         (err,result) => {
             if (err) {
                 console.error('Error inserting event:', err);

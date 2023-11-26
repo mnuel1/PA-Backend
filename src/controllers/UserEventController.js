@@ -31,7 +31,7 @@ const viewParticipants = expressAsyncHandler(async (req, res) => {
             INNER JOIN pa_users_events ue ON u.id = ue.user_id
             WHERE ue.event_id = $1
         `, [event_id]);
-        console.log(queryResult.rows);
+        
         if (queryResult.rows) {
             // console.log(queryResult);
             const users = queryResult.rows;
