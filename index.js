@@ -54,6 +54,8 @@ app.post('/sendNotification',notificationController.sendNotification);
 app.patch('/setNotifRead',notificationController.modifyNotification);
 app.get('/getNotifications',notificationController.retrieveNotification);
 
+
+app.get('/userViewEvents',userEventController.userViewEvents);
 app.get('/getEvents',userEventController.viewEvents);
 app.get('/getParticipant',userEventController.viewParticipants);
 
