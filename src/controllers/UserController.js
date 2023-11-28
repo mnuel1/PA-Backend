@@ -25,12 +25,12 @@ const Register = expressAsyncHandler(async (req, res) => {
     
     validateUserData(req, res, async () => {
         try {
-            const hashedPassword = await bcrypt.hash(password, 10);
+            
 
             connection.query(
                 `INSERT INTO pa_users (username, email, password, fullname,
                 employment_id, office, contact, image, verify) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                [username, email, hashedPassword, fullname, employment_id, office, contact,null,false],
+                [username, email, password, fullname, employment_id, office, contact,null,false],
                 (err, result) => {
                     if (err) {
                         console.error('Error inserting user:', err);

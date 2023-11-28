@@ -3,10 +3,8 @@ const connection = require('../configs/connection');
 require('dotenv').config();
 
 
-const sendNotification = expressAsyncHandler(async (req, res) => {
-
-    const { user_id, message } = req.body;
-
+const sendNotification = expressAsyncHandler(async (user_id, message, res) => {
+    
     connection.query(
         `INSERT INTO pa_users_notification (user_id, message, "read", created_at) VALUES ($1, $2, $3, $4)`,
         [user_id, message, false, new Date()],
@@ -43,7 +41,7 @@ const modifyNotification = expressAsyncHandler(async (req, res) => {
 })
 
 const retrieveNotification = expressAsyncHandler(async (req, res) => {
-    const { user_id } = req.body;
+    const { user_id } = req.query;
   
     try {
       // Retrieve notifications and user information
@@ -58,7 +56,7 @@ const retrieveNotification = expressAsyncHandler(async (req, res) => {
       );
   
       const notifications = queryResult.rows;
-  
+        console.log(notifications);
       res.status(200).json({ title: 'Success', notifications });
     } catch (error) {
       console.error(error.message);

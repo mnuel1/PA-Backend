@@ -7,7 +7,7 @@ const userViewEvents = expressAsyncHandler(async (req, res) => {
     try {
         // Assuming you have the user ID in the request (you may need to adjust this part)
         const {user_id} = req.query;
-        console.log(user_id);
+        
         // Use INNER JOIN to get only the events assigned to the user
         const queryResult = await connection.query(`
             SELECT pe.*

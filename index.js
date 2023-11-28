@@ -23,7 +23,6 @@ app.use(express.urlencoded({ extended: true }));
 
 const multer = require('multer');
 
-
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/');
