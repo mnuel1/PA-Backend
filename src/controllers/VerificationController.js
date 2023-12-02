@@ -11,8 +11,10 @@ const Verified = expressAsyncHandler(async (req, res) => {
             
             res.status(500).json({ title: 'Something went wrong.', message: `Verification failed. Please try again later..` });
         } else {
-            sendNotification(user_id,"Congratulations! 🎉 You are now verified!",res);
-            // res.status(200).json({ title: 'SUCCESS.', message: `YOURE VERIFIED NOW` });
+            sendNotification(user_id, "0", true,
+                "Congratulations! 🎉 You are now verified!",
+                "",
+                res);            
         }
     
     })

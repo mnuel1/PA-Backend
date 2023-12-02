@@ -1,12 +1,13 @@
 const expressAsyncHandler = require('express-async-handler');
 const connection = require('../configs/connection');
+const { sendNotification } = require('./NotificationController');
 require('dotenv').config();
 
 
 
 
 const addParticipant = expressAsyncHandler(async (req, res) => {
-    const { user_ids, event_id } = req.body;
+    const { user_ids, event_id, event_title, datetime, location } = req.body;
 
     const user_idsArray = user_ids.split(',').map(id => id.trim());
     
@@ -22,7 +23,14 @@ const addParticipant = expressAsyncHandler(async (req, res) => {
                 console.error('Error adding participants:', err);
                 res.status(500).json({ title: 'Something went wrong', message: 'Adding participants failed. Please try again later.' });
             } else {
-                res.status(200).json({ title: 'Success', message: 'Participants added' });
+                sendNotification(user_idsArray, event_id, false
+                    `We are inviting you to join us!
+                    Event: ${event_title}
+                    Date: ${datetime}
+                    Location: ${location}`,
+                    "",
+                    res); 
+                // res.status(200).json({ title: 'Success', message: 'Participants added' });
             }
         }
     );
@@ -101,7 +109,7 @@ const createEvent = expressAsyncHandler(async (req, res) => {
             } else {
             
                 if (result.rows.length > 0) {
-                    const { id } = result.rows[0];            
+                    const { id } = result.rows[0];                                       
                     res.status(200).json({ title: 'Success', message: 'Event Created', id });
                 } else {
                     console.error('Unexpected result:', result);

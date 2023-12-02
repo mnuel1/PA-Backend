@@ -53,6 +53,11 @@ app.post('/sendNotification',notificationController.sendNotification);
 app.patch('/setNotifRead',notificationController.modifyNotification);
 app.get('/getNotifications',notificationController.retrieveNotification);
 
+app.get('/getAdminNotification',notificationController.retrieveAdminNotification)
+
+// user
+app.patch('/stateNotification',notificationController.stateNotification);
+
 
 app.get('/userViewEvents',userEventController.userViewEvents);
 app.get('/getEvents',userEventController.viewEvents);
