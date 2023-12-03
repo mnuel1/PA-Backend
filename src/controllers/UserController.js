@@ -18,7 +18,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-
 const Register = expressAsyncHandler(async (req, res) => {
 
     const { username, email, contact, password, fullname, employment_id, office } = req.body;
@@ -26,7 +25,6 @@ const Register = expressAsyncHandler(async (req, res) => {
     validateUserData(req, res, async () => {
         try {
             
-
             connection.query(
                 `INSERT INTO pa_users (username, email, password, fullname,
                 employment_id, office, contact, image, verify) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
@@ -54,13 +52,13 @@ const Login = expressAsyncHandler(async (req, res) => {
             res.status(500).json({title: 'Internal Error', message: err.message});
         }
         if(result.rows.length > 0){
-            const { id, fullname} = result.rows[0]; // Assuming the primary key is named 'id'
+            const { id, fullname, contact, email } = result.rows[0]; //eto
             const token = jwt.sign(
-                { username: username, user_id: id, fullname: fullname, role: 'user' },
+                { username: username, user_id: id, fullname: fullname, role: 'user', contact, email },
                 process.env.JWT_TOKEN,
                 {expiresIn: checked ? '1d': '7d'}
             )
-            res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, fullname: fullname, role: 'user'});
+            res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, fullname: fullname, role: 'user',contact, email});
         
         }else{
             res.status(401).json({title: "Login Error" ,message: "Credentials Incorrect"})

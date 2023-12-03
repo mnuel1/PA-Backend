@@ -67,7 +67,12 @@ const retrieveNotification = expressAsyncHandler(async (req, res) => {
     }
 
 });
-
+const deleteUserEventNotifications = async (user_id, event_id) => {
+    await connection.query(
+      'DELETE FROM pa_admin_notification WHERE user_id = $1 AND event_id = $2',
+      [user_id, event_id]
+    );
+};
 const stateNotification = expressAsyncHandler(async (req, res) => {
     const { user_id, event_id, invitation, comment } = req.body;
   
@@ -78,7 +83,10 @@ const stateNotification = expressAsyncHandler(async (req, res) => {
             'UPDATE pa_users_notification SET invitation = $1, comment = $2 WHERE user_id = $3 AND event_id = $4',
             [invitation, comment, user_id, event_id]
         );
-         
+        
+        // Before inserting new records, delete previous records with the same user_id and event_id
+        await deleteUserEventNotifications(user_id, event_id);
+        
         // Insert into pa_admin_notification
         await connection.query(
             'INSERT INTO pa_admin_notification (user_id, event_id, message, read, invitation) VALUES ($1, $2, $3, $4, $5)',
@@ -102,7 +110,7 @@ const retrieveAdminNotification = expressAsyncHandler(async (req, res) => {
             e.*, n.message, n.read, n.invitation, n.created_at
             FROM pa_admin_notification n
             JOIN pa_users u ON n.user_id = u.id
-            JOIN pa_events e ON n.event_id = e.id;
+            JOIN pa_events e ON n.event_id = e.id WHERE ;
           `
         )
 
