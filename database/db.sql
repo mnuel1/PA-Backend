@@ -73,10 +73,10 @@ INSERT INTO pa_users (
 CREATE TABLE pa_users_notification (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL,
-  event_id INTEGER NOT NULL,
+  event_id INTEGER,
   message TEXT NOT NULL,
   read BOOLEAN NOT NULL DEFAULT FALSE,
-  invitation BOOLEAN NOT NULL DEFAULT FALSE,
+  invitation BOOLEAN DEFAULT FALSE,
   comment VARCHAR(200),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES pa_users(id) ON DELETE CASCADE,
@@ -108,6 +108,7 @@ CREATE TABLE pa_users_events (
   id SERIAL PRIMARY KEY,  
   user_id INTEGER NOT NULL,
   event_id INTEGER NOT NULL,
+  starred BOOLEAN NOT NULL DEFAULT FALSE,
   FOREIGN KEY (user_id) REFERENCES pa_users(id) ON DELETE CASCADE,
   FOREIGN KEY (event_id) REFERENCES pa_events(id) ON DELETE CASCADE
 );
@@ -120,7 +121,6 @@ CREATE TABLE pa_users_attendance (
   attend BOOLEAN NOT NULL,
   FOREIGN KEY (user_id) REFERENCES pa_users(id) ON DELETE CASCADE,
   FOREIGN KEY (event_id) REFERENCES pa_events(id) ON DELETE CASCADE
-
 );
 
 
@@ -129,5 +129,5 @@ CREATE TABLE pa_reports (
   event_id INTEGER NOT NULL,
   endTime TIMESTAMP NOT NULL,
   narrative VARCHAR(200),
-  FOREIGN KEY (event_id) REFERENCES pa_events(id) ON DELETE CASCADE,
+  FOREIGN KEY (event_id) REFERENCES pa_events(id) ON DELETE CASCADE
 );

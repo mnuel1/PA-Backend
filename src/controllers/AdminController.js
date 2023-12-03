@@ -53,13 +53,14 @@ const AdminLogin = expressAsyncHandler(async (req, res) => {
             res.status(500).json({title: 'Internal Error', message: err.message});
         }
         if(result.rows.length > 0){
-            const { id, fullname } = result.rows[0]; // Assuming the primary key is named 'id'
+            const { id, fullname, contact, email } = result.rows[0]; //eto
             const token = jwt.sign(
-                {username: username, user_id: id, fullname: fullname, role: 'admin'},
+                {username: username, user_id: id, fullname: fullname, role: 'admin', contact, email}, //eto
                 process.env.JWT_TOKEN,
                 {expiresIn: checked ? '1d': '7d'}
             )
-            res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, fullname: fullname, role: 'admin'});
+
+            res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, fullname: fullname, role: 'admin', contact, email});
         
         }else{
             res.status(401).json({title: "Login Error" ,message: "Credentials Incorrect"})

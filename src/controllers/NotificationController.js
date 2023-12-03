@@ -3,7 +3,7 @@ const connection = require('../configs/connection');
 require('dotenv').config();
 
 
-const sendNotification = expressAsyncHandler(async (user_idsArray, event_id, read, message, comment, res) => {
+const sendNotification = expressAsyncHandler(async (user_idsArray, event_id, read, message, comment, res) => {   
     try {
         for (const user_id of user_idsArray) {
             await connection.query(
@@ -19,6 +19,7 @@ const sendNotification = expressAsyncHandler(async (user_idsArray, event_id, rea
         res.status(500).json({ title: 'Something went wrong.', message: 'Please try again later.' });
     }
 });
+
 
 
 const modifyNotification = expressAsyncHandler(async (req, res) => {
@@ -94,20 +95,19 @@ const stateNotification = expressAsyncHandler(async (req, res) => {
 
 
 const retrieveAdminNotification = expressAsyncHandler(async (req, res) => {
-    const { user_id } = req.query;
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     try {
         const queryResult = await connection.query(
             `SELECT n.id AS notification_id, n.user_id, u.*,
             e.*, n.message, n.read, n.invitation, n.created_at
             FROM pa_admin_notification n
             JOIN pa_users u ON n.user_id = u.id
-            JOIN pa_events e ON n.event_id = e.id
-            WHERE notification_id = $1;
-          `, [user_id]
+            JOIN pa_events e ON n.event_id = e.id;
+          `
         )
 
         const notifications = queryResult.rows;
-
+            
         res.status(200).json({ title: 'Success', notifications });
     } catch (error) {
         console.error(error.message);

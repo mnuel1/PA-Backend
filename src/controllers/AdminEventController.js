@@ -23,7 +23,7 @@ const addParticipant = expressAsyncHandler(async (req, res) => {
                 console.error('Error adding participants:', err);
                 res.status(500).json({ title: 'Something went wrong', message: 'Adding participants failed. Please try again later.' });
             } else {
-                sendNotification(user_idsArray, event_id, false
+                sendNotification(user_idsArray, event_id, false,
                     `We are inviting you to join us!
                     Event: ${event_title}
                     Date: ${datetime}
@@ -150,8 +150,7 @@ const deleteEvent = expressAsyncHandler(async (req,res) => {
     
     try {
         const { event_id } = req.query;
-
-        console.log(event_id);
+        
         // Delete the event from pa_events table
         const deleteEventResult = await connection.query(`
             DELETE FROM pa_events
@@ -172,8 +171,187 @@ const deleteEvent = expressAsyncHandler(async (req,res) => {
 
 })
 
+const getAttendees = expressAsyncHandler(async (req,res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    try {      
+        const { event_id } = req.query; // Assuming event_id is passed in the URL parameters       
+        const queryResult = await connection.query(`
+            SELECT
+                a.id AS attendance_id,
+                a.user_id,
+                u.*,
+                e.*
+            FROM
+                pa_users_attendance a
+            JOIN
+                pa_users u ON a.user_id = u.id
+            JOIN
+                pa_events e ON a.event_id = e.id
+            WHERE 
+                a.event_id = $1
+                AND a.attend = false;
+        `, [event_id]);
+        
+        if (queryResult.rows) {
+            
+            const users = queryResult.rows;
+            res.status(200).json({ title: 'Success', users, });
+        } else {
+            res.status(500).json({ title: 'Something went wrong.', message: 'Please try again later.' });
+        }
+     
+    
 
+    }catch(error) {
+        console.error(error);
+        res.status(500).json({ title: 'Something went wrong', message: 'Failed to fetch participants.' });
+    }
+})
+
+const presentAbsentAttendee = expressAsyncHandler(async (req,res) => {
+    const { user_id, event_id, attend } = req.body;
+
+    try {
+        connection.query(`UPDATE pa_users_attendance
+        SET attend = $1
+        WHERE user_id = $2 AND event_id = $3`, [attend, user_id, event_id], (err,result) => {
+            if (err) {
+                console.error('Error inserting event:', err);
+                res.status(500).json({ title: 'Something went wrong', message: 'Edit failed. Please try again later.' });
+            } else {            
+                res.status(200).json({ title: 'Success', message: 'Edit done' });                
+            }
+        })
+            
+    }catch(error) {
+        console.error('Unexpected result:', error);
+        res.status(500).json({ title: 'Unexpected Error', message: 'An unexpected error occurred. Please try again later.' });
+    }
+})
+
+
+const getReport = expressAsyncHandler( async(req,res) => {
+    
+    try {
+        const queryResult = await connection.query(`SELECT pr.*, pe.*
+        FROM pa_reports pr
+        INNER JOIN pa_events pe ON pr.event_id = pe.id;`)
+        
+        if (queryResult.rows) {
+                
+            const reports = queryResult.rows;
+            res.status(200).json({ title: 'Success', reports, });
+        } else {
+            res.status(500).json({ title: 'Something went wrong.', message: 'Please try again later.' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ title: 'Something went wrong', message: 'Failed to fetch participants.' });        
+    }
+    
+})
+
+
+const createReport = expressAsyncHandler(async (req, res) => {
+    const { event_id, endTime, narrative } = req.body;    
+    connection.query(
+        `INSERT INTO pa_reports (event_id, endTime, narrative) VALUES ($1, $2, $3) RETURNING id`,
+        [event_id, endTime, narrative],
+        (err, result) => {
+            if (err) {
+                console.error('Error inserting event:', err);
+                res.status(500).json({ title: 'Something went wrong', message: 'Creating event failed. Please try again later.' });
+            } else {
+            
+                if (result.rows.length > 0) {
+                    const { id } = result.rows[0];                                       
+                    res.status(200).json({ title: 'Success', message: 'Event Created', id });
+                } else {
+                    console.error('Unexpected result:', result);
+                    res.status(500).json({ title: 'Unexpected Error', message: 'An unexpected error occurred. Please try again later.' });
+                }
+            }
+        }
+    );
+});
+
+
+const getPresents = expressAsyncHandler(async (req,res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    try {      
+        const { event_id } = req.query; // Assuming event_id is passed in the URL parameters       
+        const queryResult = await connection.query(`
+            SELECT
+                a.id AS attendance_id,
+                a.user_id,
+                u.*,
+                e.*
+            FROM
+                pa_users_attendance a
+            JOIN
+                pa_users u ON a.user_id = u.id
+            JOIN
+                pa_events e ON a.event_id = e.id
+            WHERE 
+                a.event_id = $1
+                AND a.attend = true;
+        `, [event_id]);
+        
+        if (queryResult.rows) {
+            
+            const users = queryResult.rows;
+            res.status(200).json({ title: 'Success', users, });
+        } else {
+            res.status(500).json({ title: 'Something went wrong.', message: 'Please try again later.' });
+        }
+     
+    
+
+    }catch(error) {
+        console.error(error);
+        res.status(500).json({ title: 'Something went wrong', message: 'Failed to fetch participants.' });
+    }
+})
+
+const getAbsents = expressAsyncHandler(async (req,res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    try {      
+        const { event_id } = req.query; // Assuming event_id is passed in the URL parameters       
+        const queryResult = await connection.query(`
+            SELECT
+                a.id AS attendance_id,
+                a.user_id,
+                u.*,
+                e.*
+            FROM
+                pa_users_attendance a
+            JOIN
+                pa_users u ON a.user_id = u.id
+            JOIN
+                pa_events e ON a.event_id = e.id
+            WHERE 
+                a.event_id = $1
+                AND a.attend = false;
+        `, [event_id]);
+        
+        if (queryResult.rows) {
+            
+            const users = queryResult.rows;
+            res.status(200).json({ title: 'Success', users, });
+        } else {
+            res.status(500).json({ title: 'Something went wrong.', message: 'Please try again later.' });
+        }
+     
+    
+
+    }catch(error) {
+        console.error(error);
+        res.status(500).json({ title: 'Something went wrong', message: 'Failed to fetch participants.' });
+    }
+})
 module.exports = {
     createEvent, editEvent, deleteEvent,     
-    addParticipant, updateParticipant, removeParticipant
+    addParticipant, updateParticipant, removeParticipant,
+    presentAbsentAttendee,getAttendees,createReport,getReport,
+    getPresents, getAbsents
 }

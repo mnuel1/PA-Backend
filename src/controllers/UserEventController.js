@@ -10,10 +10,13 @@ const userViewEvents = expressAsyncHandler(async (req, res) => {
         
         // Use INNER JOIN to get only the events assigned to the user
         const queryResult = await connection.query(`
-            SELECT pe.*
+            SELECT pe.*, pue.starred
             FROM pa_events pe
             INNER JOIN pa_users_events pue ON pe.id = pue.event_id
+            INNER JOIN pa_users_notification pun ON pe.id = pun.event_id
             WHERE pue.user_id = $1
+            AND pun.user_id = $1
+            AND pun.invitation = true;
         `, [user_id]);
 
         if (queryResult.rows) {
@@ -73,10 +76,52 @@ const viewParticipants = expressAsyncHandler(async (req, res) => {
 
 })
 
+const starredEvent = expressAsyncHandler(async (req, res) => {
+
+    try {
+        const {user_id, event_id, starred} = req.body
+
+        connection.query(`UPDATE pa_users_events SET starred = $3
+        WHERE user_id = $1 AND event_id = $2`,[user_id, event_id, starred], (err, result) => {
+
+            if (err) {
+                res.status(500).json({ title: 'Something went wrong.', message: 'Please try again later.' });   
+            } else {
+                res.status(200).json({ title: 'Success',});
+            }
+        })
+    }catch (error) {
+        console.error(error);
+        res.status(500).json({ title: 'Something went wrong', message: 'Failed to fetch participants.' });
+    }
+
+})
+
+const createAttendance = expressAsyncHandler(async (req, res) => {
+    try {
+        const {user_id, events_id, comments, attend} = req.body;
+
+        connection.query(`INSERT INTO pa_users_attendance 
+        (user_id, event_id, comments, attend) VALUES ($1, $2, $3, $4)`,
+        [user_id, events_id, comments, false], (err, result) => {
+            if (err) {
+                res.status(500).json({ title: 'Something went wrong.', message: 'Please try again later.' });   
+            } else {
+                res.status(200).json({ title: 'Success',});
+            }
+        })
+    }catch(error) {
+        console.error(error);
+        res.status(500).json({ title: 'Something went wrong', message: 'Failed to fetch participants.' });
+    }
+})
+
 
 module.exports = {
     viewEvents,
     viewParticipants,
-    userViewEvents
+    userViewEvents,
+    starredEvent,
+    createAttendance
 }
 

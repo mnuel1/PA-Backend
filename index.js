@@ -62,14 +62,30 @@ app.patch('/stateNotification',notificationController.stateNotification);
 app.get('/userViewEvents',userEventController.userViewEvents);
 app.get('/getEvents',userEventController.viewEvents);
 app.get('/getParticipant',userEventController.viewParticipants);
+app.patch('/starredEvent',userEventController.starredEvent);
+
+app.post('/createAttendance',userEventController.createAttendance)
+
+
 
 app.post('/createEvent',adminEventController.createEvent);
 app.patch('/editEvent',adminEventController.editEvent);
 app.delete('/deleteEvent',adminEventController.deleteEvent);
 
+app.post('/createReport',adminEventController.createReport);
+app.get('/getReports', adminEventController.getReport)
+
 app.post('/addParticipant',adminEventController.addParticipant);
 app.put('/updateParticipants',adminEventController.updateParticipant)
 app.delete('/removeParticipant',adminEventController.removeParticipant);
+
+// attendees
+app.patch('/updateAttendee',adminEventController.presentAbsentAttendee)
+app.get('/getAttendees',adminEventController.getAttendees)
+
+
+app.get('/getPresents',adminEventController.getPresents)
+app.get('/getAbsents',adminEventController.getAbsents)
 
 app.get('/', (req, res) => {
   res.send('Hello, World!');
