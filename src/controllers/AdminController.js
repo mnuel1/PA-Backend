@@ -53,14 +53,15 @@ const AdminLogin = expressAsyncHandler(async (req, res) => {
             res.status(500).json({title: 'Internal Error', message: err.message});
         }
         if(result.rows.length > 0){
-            const { id, fullname, contact, email } = result.rows[0]; //eto
+            const { id, fullname, contact, email, image } = result.rows[0]; //eto
             const token = jwt.sign(
                 {username: username, user_id: id, fullname: fullname, role: 'admin', contact, email}, //eto
                 process.env.JWT_TOKEN,
                 {expiresIn: checked ? '1d': '7d'}
             )
-
-            res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, fullname: fullname, role: 'admin', contact, email});
+            const img = Buffer.from(image, 'binary').toString('base64');
+            res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, 
+            fullname: fullname, role: 'admin', contact, email, img});
         
         }else{
             res.status(401).json({title: "Login Error" ,message: "Credentials Incorrect"})
@@ -80,7 +81,7 @@ const editAdmin = expressAsyncHandler(async (req, res) => {
         }
 
         const { user_id, username, email, contact, image} = req.body;
-        const imagePath = req.file ? req.file.path : null; 
+        const imagePath = image.uri ? image.uri : null; 
 
         console.log(imagePath);
         

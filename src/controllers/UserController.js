@@ -52,13 +52,14 @@ const Login = expressAsyncHandler(async (req, res) => {
             res.status(500).json({title: 'Internal Error', message: err.message});
         }
         if(result.rows.length > 0){
-            const { id, fullname, contact, email } = result.rows[0]; //eto
+            const { id, fullname, contact, email,image } = result.rows[0]; //eto
             const token = jwt.sign(
                 { username: username, user_id: id, fullname: fullname, role: 'user', contact, email },
                 process.env.JWT_TOKEN,
                 {expiresIn: checked ? '1d': '7d'}
             )
-            res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, fullname: fullname, role: 'user',contact, email});
+            res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, fullname: 
+            fullname, role: 'user',contact, email ,image});
         
         }else{
             res.status(401).json({title: "Login Error" ,message: "Credentials Incorrect"})
