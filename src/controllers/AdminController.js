@@ -21,22 +21,34 @@ const Register = expressAsyncHandler(async (req, res) => {
             connection.query(
                 `INSERT INTO pa_admin (username, email, password, fullname,
                 employment_id, office, contact, image, verify) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [username, email, password, fullname, employment_id, office, contact],
-                (err, result) => {
-                    if (err) {
-                        console.error('Error inserting user:', err);
-                        res.status(500).json({ title: 'Internal Error', message: 'Registration failed. Please try again later.' });
-                    } else {
-                        res.status(200).json({ title: 'Success', message: 'Registered Successfully' });
-                    }
-                }
-            );
-        } catch (error) {
-            console.error('Error hashing password:', error);
-            res.status(500).json({ title: 'Internal Error', message: 'Registration failed. Please try again later.' });
+        [username, email, password, fullname, employment_id, office, contact],
+        (err, result) => {
+          if (err) {
+            console.error("Error inserting user:", err);
+            res
+              .status(500)
+              .json({
+                title: "Internal Error",
+                message: "Registration failed. Please try again later.",
+              });
+          } else {
+            res
+              .status(200)
+              .json({ title: "Success", message: "Registered Successfully" });
+          }
         }
-    });
-})
+      );
+    } catch (error) {
+      console.error("Error hashing password:", error);
+      res
+        .status(500)
+        .json({
+          title: "Internal Error",
+          message: "Registration failed. Please try again later.",
+        });
+    }
+  });
+});
 
 const AdminLogin = expressAsyncHandler(async (req, res) => {
     const { username, password, checked } = req.body;
@@ -63,42 +75,55 @@ const AdminLogin = expressAsyncHandler(async (req, res) => {
 
 
 const editAdmin = expressAsyncHandler(async (req, res) => {
+  // Use 'upload.single' middleware to handle the file upload
+  upload.single("image")(req, res, async (err) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ title: "Internal Error", message: "Image upload failed." });
+    } else {
+      console.log(req.body);
+    }
 
-    // Use 'upload.single' middleware to handle the file upload
-    upload.single('image')(req, res, async (err) => {
-        if (err) {
-            return res.status(500).json({ title: 'Internal Error', message: 'Image upload failed.' });
-        } else {
-            console.log(req.body);
-        }
+    const { user_id, username, email, contact, image } = req.body;
+    const imagePath = image.uri ? image.uri : null;
 
-        const { user_id, username, email, contact, image} = req.body;
-        const imagePath = image.uri ? image.uri : null; 
+    console.log(imagePath);
 
-        console.log(imagePath);
-        
-        validateUserData(req, res, async () => {
-            try {
-                connection.query(
-                `UPDATE pa_admin 
+    validateUserData(req, res, async () => {
+      try {
+        connection.query(
+          `UPDATE pa_admin 
                 SET username = $1, email = $2, contact = $3, image = $4 
                 WHERE id = $5`,
-                [username, email, contact, imagePath, user_id],
-                (err, result) => {
-                    if (err) {
-                    console.error('Error updating user:', err);
-                    res.status(500).json({ title: 'Something went wrong.', message: 'Update failed. Please try again later.' });
-                    } else {
-                    res.status(200).json({ title: 'Success', message: 'Updated Successfully' });
-                    }
-                }
-                );
-            } catch (error) {
-                res.status(500).json({ title: 'Something went wrong.', message: 'Update failed. Please try again later.' });
+          [username, email, contact, imagePath, user_id],
+          (err, result) => {
+            if (err) {
+              console.error("Error updating user:", err);
+              res
+                .status(500)
+                .json({
+                  title: "Something went wrong.",
+                  message: "Update failed. Please try again later.",
+                });
+            } else {
+              res
+                .status(200)
+                .json({ title: "Success", message: "Updated Successfully" });
             }
-        });
+          }
+        );
+      } catch (error) {
+        res
+          .status(500)
+          .json({
+            title: "Something went wrong.",
+            message: "Update failed. Please try again later.",
+          });
+      }
     });
-})
+  });
+});
 
 const retrieveAdmin = expressAsyncHandler(async (req, res) => {
     const { id } = req.params;
