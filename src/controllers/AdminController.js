@@ -4,17 +4,11 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const { validateUserData } = require('../middlewares/ValidateUserData');
+
 require('dotenv').config();
 
 // Set up multer storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'uploads/'); // Specify the directory where you want to store the uploaded files
-    },
-    filename: function (req, file, cb) {
-      cb(null, Date.now() + '-' + file.originalname); // Use a unique filename to avoid overwriting files
-    },
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({ storage: storage });
 
@@ -23,9 +17,7 @@ const Register = expressAsyncHandler(async (req, res) => {
     const { username, email, contact, password, fullname, employment_id, office } = req.body;
     
     validateUserData(req, res, async () => {
-        try {
-            
-
+        try {            
             connection.query(
                 `INSERT INTO pa_admin (username, email, password, fullname,
                 employment_id, office, contact, image, verify) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -48,20 +40,20 @@ const Register = expressAsyncHandler(async (req, res) => {
 
 const AdminLogin = expressAsyncHandler(async (req, res) => {
     const { username, password, checked } = req.body;
-    connection.query('SELECT * FROM pa_admin WHERE username = $1 AND password = $2', [username, password], (err, result) => {        
+    connection.query('SELECT * FROM pa_admin WHERE username = $1 AND password = $2', [username, password], (err, result) => {
         if(err){
             res.status(500).json({title: 'Internal Error', message: err.message});
         }
         if(result.rows.length > 0){
-            const { id, fullname, contact, email, image } = result.rows[0]; //eto
+            const { id, fullname, contact, email } = result.rows[0]; //eto
             const token = jwt.sign(
                 {username: username, user_id: id, fullname: fullname, role: 'admin', contact, email}, //eto
                 process.env.JWT_TOKEN,
                 {expiresIn: checked ? '1d': '7d'}
-            )
-            const img = Buffer.from(image, 'binary').toString('base64');
+            )                        
             res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, 
-            fullname: fullname, role: 'admin', contact, email, img});
+            fullname: fullname, role: 'admin', contact, email});
+            
         
         }else{
             res.status(401).json({title: "Login Error" ,message: "Credentials Incorrect"})
@@ -108,5 +100,18 @@ const editAdmin = expressAsyncHandler(async (req, res) => {
     });
 })
 
+const retrieveAdmin = expressAsyncHandler(async (req, res) => {
+    const { id } = req.params;
 
-module.exports = { Register, AdminLogin, editAdmin};
+    connection.query('SELECT * FROM pa_admin WHERE id = $1', [id], (err, result) => {
+    
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Something went wrong' });
+        }        
+        const { id, fullname, contact, email } = result.rows[0]; 
+        res.status(200).json({title: "Success", message: "done", user_id: id, 
+          fullname: fullname, role: 'admin', contact, email});
+    })
+
+})
+module.exports = { Register, AdminLogin, editAdmin, retrieveAdmin};

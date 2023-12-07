@@ -87,9 +87,71 @@ app.get('/getAttendees',adminEventController.getAttendees)
 app.get('/getPresents',adminEventController.getPresents)
 app.get('/getAbsents',adminEventController.getAbsents)
 
-app.get('/', (req, res) => {
-  res.send('Hello, World!');
+app.get('/retrieveAdmin/:id',adminController.retrieveAdmin)
+app.get('/retrieveUser/:id',userController.retrieveUser)
+
+app.get('/adminImage/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await connection.query('SELECT image FROM pa_admin WHERE id = $1', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+    const { filename, image } = result.rows[0];
+
+    res.set('Content-Type', 'image/*');
+    
+    res.send(image);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
+
+app.get('/userImage/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await connection.query('SELECT image FROM pa_users WHERE id = $1', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+    const { filename, image } = result.rows[0];
+        
+    res.set('Content-Type', 'image/*');
+    
+   
+    res.send(image);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/attendanceImage/:id', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  const { id } = req.params;
+  
+  try {
+    const result = await connection.query('SELECT image FROM pa_users_attendance WHERE id = $1', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+    const { filename, image } = result.rows[0];
+        
+    res.set('Content-Type', 'image/*');
+       
+    res.send(image);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);

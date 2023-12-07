@@ -2,6 +2,11 @@ const expressAsyncHandler = require('express-async-handler');
 const connection = require('../configs/connection');
 require('dotenv').config();
 
+const multer = require('multer');
+const storage = multer.memoryStorage();
+
+const upload = multer({ storage: storage });
+
 const userViewEvents = expressAsyncHandler(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     try {
@@ -30,7 +35,6 @@ const userViewEvents = expressAsyncHandler(async (req, res) => {
         res.status(500).json({ title: 'Something went wrong', message: 'Failed to fetch events.' });
     }
 });
-
 
 const viewEvents = expressAsyncHandler(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
@@ -98,23 +102,53 @@ const starredEvent = expressAsyncHandler(async (req, res) => {
 })
 
 const createAttendance = expressAsyncHandler(async (req, res) => {
-    try {
-        const {user_id, events_id, comments, attend} = req.body;
+    // Use 'upload.single' middleware to handle the file upload
+    upload.single('image')(req, res, async (err) => {
+        if (err) {
+            return res.status(500).json({ title: 'Internal Error', message: 'Image upload failed.' });
+        } else {
+            console.log('there it is');
+        }
 
-        connection.query(`INSERT INTO pa_users_attendance 
-        (user_id, event_id, comments, attend) VALUES ($1, $2, $3, $4)`,
-        [user_id, events_id, comments, false], (err, result) => {
-            if (err) {
-                res.status(500).json({ title: 'Something went wrong.', message: 'Please try again later.' });   
-            } else {
-                res.status(200).json({ title: 'Success',});
-            }
-        })
-    }catch(error) {
-        console.error(error);
-        res.status(500).json({ title: 'Something went wrong', message: 'Failed to fetch participants.' });
-    }
-})
+        try {
+            const { user_id, events_id, comments, attend, image } = req.body;
+
+            const imagePath = image ? image : null;
+                        
+            connection.query(
+                `DELETE FROM pa_users_attendance WHERE user_id = $1 AND event_id = $2`,
+                [user_id, events_id],
+                (deleteErr, deleteResult) => {
+                    if (deleteErr) {
+                        return res.status(500).json({
+                            title: 'Something went wrong.',
+                            message: 'Failed to delete existing data.',
+                        });
+                    }                    
+                    connection.query(
+                        `INSERT INTO pa_users_attendance 
+                        (user_id, event_id, comments, attend, image) VALUES ($1, $2, $3, $4, $5)`,
+                        [user_id, events_id, comments, false, imagePath],
+                        (insertErr, insertResult) => {
+                            if (insertErr) {
+                                return res.status(500).json({
+                                    title: 'Something went wrong.',
+                                    message: 'Failed to insert new data.',
+                                });
+                            }
+
+                            res.status(200).json({ title: 'Success' });
+                        }
+                    );
+                }
+            );
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ title: 'Something went wrong', message: 'Failed to fetch participants.' });
+        }
+    });
+});
+
 
 
 module.exports = {
@@ -123,5 +157,6 @@ module.exports = {
     userViewEvents,
     starredEvent,
     createAttendance
+
 }
 

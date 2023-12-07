@@ -119,6 +119,7 @@ CREATE TABLE pa_users_attendance (
   event_id INTEGER NOT NULL,
   comments VARCHAR(200),
   attend BOOLEAN NOT NULL,
+  image BYTEA,
   FOREIGN KEY (user_id) REFERENCES pa_users(id) ON DELETE CASCADE,
   FOREIGN KEY (event_id) REFERENCES pa_events(id) ON DELETE CASCADE
 );

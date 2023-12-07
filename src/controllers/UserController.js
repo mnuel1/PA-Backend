@@ -7,14 +7,7 @@ const { validateUserData } = require('../middlewares/ValidateUserData');
 require('dotenv').config();
 
 // Set up multer storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'uploads/'); // Specify the directory where you want to store the uploaded files
-    },
-    filename: function (req, file, cb) {
-      cb(null, Date.now() + '-' + file.originalname); // Use a unique filename to avoid overwriting files
-    },
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({ storage: storage });
 
@@ -52,14 +45,14 @@ const Login = expressAsyncHandler(async (req, res) => {
             res.status(500).json({title: 'Internal Error', message: err.message});
         }
         if(result.rows.length > 0){
-            const { id, fullname, contact, email,image } = result.rows[0]; //eto
+            const { id, fullname, contact, email } = result.rows[0]; //eto
             const token = jwt.sign(
                 { username: username, user_id: id, fullname: fullname, role: 'user', contact, email },
                 process.env.JWT_TOKEN,
                 {expiresIn: checked ? '1d': '7d'}
             )
             res.status(200).json({title: "Success", message: "Login Successful", token: token, username: username, user_id: id, fullname: 
-            fullname, role: 'user',contact, email ,image});
+            fullname, role: 'user',contact, email});
         
         }else{
             res.status(401).json({title: "Login Error" ,message: "Credentials Incorrect"})
@@ -120,8 +113,8 @@ const editUser = expressAsyncHandler(async (req, res) => {
             console.log('there it is');
         }
 
-        const { user_id, username, email, contact, } = req.body;
-        const imagePath = req.file ? req.file.path : null; // Assuming you named the input field 'image'
+        const { user_id, username, email, contact, image} = req.body;
+        const imagePath = image.uri ? image.uri : null; 
 
         
         validateUserData(req, res, async () => {
@@ -147,11 +140,25 @@ const editUser = expressAsyncHandler(async (req, res) => {
     });
 })
 
+const retrieveUser = expressAsyncHandler(async (req, res) => {
+    const { id } = req.params;
 
+    connection.query('SELECT * FROM pa_users WHERE id = $1', [id], (err, result) => {
+    
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Something went wrong' });
+        }        
+        const { id, fullname, contact, email } = result.rows[0]; 
+        res.status(200).json({title: "Success", message: "done", user_id: id, 
+          fullname: fullname, role: 'admin', contact, email});
+    })
+
+})
 module.exports = { 
     Register,
     Login,
     retrieveNotVerifiedUsers,
     retrieveVerifiedUsers,
     editUser,
+    retrieveUser
 };

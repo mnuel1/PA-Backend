@@ -179,7 +179,7 @@ const getAttendees = expressAsyncHandler(async (req,res) => {
             SELECT
                 a.id AS attendance_id,
                 a.user_id,
-                a.comments
+                a.comments,
                 u.*,
                 e.*
             FROM
