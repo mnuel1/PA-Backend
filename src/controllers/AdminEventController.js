@@ -113,11 +113,18 @@ const removeParticipant = expressAsyncHandler(async (req, res) => {
 });
 
 const createEvent = expressAsyncHandler(async (req, res) => {
-  const { event, description, datetime, location, reminder, participants } =
-    req.body;
+  const {
+    event,
+    description,
+    datetime,
+    location,
+    reminder,
+    participants,
+    is_important,
+  } = req.body;
   connection.query(
-    `INSERT INTO pa_events (event, description, dateTime, location, reminder) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-    [event, description, datetime, location, datetime],
+    `INSERT INTO pa_events (event, description, dateTime, location, reminder, is_important) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+    [event, description, datetime, location, datetime, is_important],
     (err, result) => {
       if (err) {
         console.error("Error inserting event:", err);
@@ -141,17 +148,27 @@ const createEvent = expressAsyncHandler(async (req, res) => {
       }
     }
   );
+  console.log("Important: ", is_important);
 });
 
 const editEvent = expressAsyncHandler(async (req, res) => {
-  const { id, event, description, datetime, location, reminder, participants } =
-    req.body;
+  const {
+    id,
+    event,
+    description,
+    datetime,
+    location,
+    reminder,
+    participants,
+    is_important,
+  } = req.body;
 
   connection.query(
     `UPDATE pa_events 
-    SET event = $2, description = $3, datetime = $4, 
-    location = $5, reminder = $6 WHERE id = $1 RETURNING id`,
-    [id, event, description, datetime, location, datetime],
+   SET event = $2, description = $3, datetime = $4, 
+   location = $5, reminder = $6, is_important = $7 
+   WHERE id = $1 RETURNING id`,
+    [id, event, description, datetime, location, datetime, is_important],
     (err, result) => {
       if (err) {
         console.error("Error inserting event:", err);
@@ -163,6 +180,7 @@ const editEvent = expressAsyncHandler(async (req, res) => {
         if (result.rows.length > 0) {
           const { id } = result.rows[0];
           res.status(200).json({ title: "Success", message: "Edit done", id });
+          console.log("Important: ", is_important);
         } else {
           console.error("Unexpected result:", result);
           res.status(500).json({
