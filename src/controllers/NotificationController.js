@@ -83,7 +83,7 @@ const retrieveNotification = expressAsyncHandler(async (req, res) => {
     const queryResult = await connection.query(
       `SELECT n.*, u.username FROM pa_users_notification n 
         JOIN pa_users u ON n.user_id = u.id 
-        WHERE n.user_id = $1 AND n.invitation = false 
+        WHERE n.user_id = $1 AND n.invitation IS NOT NULL 
         ORDER BY n.created_at DESC`,
 
       [user_id]
