@@ -83,7 +83,7 @@ const retrieveNotification = expressAsyncHandler(async (req, res) => {
     const queryResult = await connection.query(
       `SELECT n.*, u.username FROM pa_users_notification n 
         JOIN pa_users u ON n.user_id = u.id 
-        WHERE n.user_id = $1 AND n.invitation IS NOT NULL 
+        WHERE n.user_id = $1 AND n.invitation = false 
         ORDER BY n.created_at DESC`,
 
       [user_id]
@@ -123,7 +123,7 @@ const stateNotification = expressAsyncHandler(async (req, res) => {
     // Insert into pa_admin_notification
     await connection.query(
       "INSERT INTO pa_admin_notification (user_id, event_id, message, read, invitation) VALUES ($1, $2, $3, $4, $5)",
-      [user_id, event_id, comment, false, invitation || null]
+      [user_id, event_id, comment, false, invitation]
     );
 
     res.status(200).json({ title: "Successful.", message: "congrats." });
