@@ -121,10 +121,11 @@ const createEvent = expressAsyncHandler(async (req, res) => {
     reminder,
     participants,
     is_important,
+    document,
   } = req.body;
   connection.query(
-    `INSERT INTO pa_events (event, description, dateTime, location, reminder, is_important) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-    [event, description, datetime, location, datetime, is_important],
+    `INSERT INTO pa_events (event, description, dateTime, location, reminder, is_important, document) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+    [event, description, datetime, location, datetime, is_important, document],
     (err, result) => {
       if (err) {
         console.error("Error inserting event:", err);
@@ -161,14 +162,15 @@ const editEvent = expressAsyncHandler(async (req, res) => {
     reminder,
     participants,
     is_important,
+    document
   } = req.body;
 
   connection.query(
     `UPDATE pa_events 
    SET event = $2, description = $3, datetime = $4, 
-   location = $5, reminder = $6, is_important = $7 
+   location = $5, reminder = $6, is_important = $7, document = $8 
    WHERE id = $1 RETURNING id`,
-    [id, event, description, datetime, location, datetime, is_important],
+    [id, event, description, datetime, location, datetime, is_important, document],
     (err, result) => {
       if (err) {
         console.error("Error inserting event:", err);

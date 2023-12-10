@@ -101,7 +101,9 @@ CREATE TABLE pa_events (
   description VARCHAR(500),
   dateTime TIMESTAMP NOT NULL,
   location VARCHAR(100),
-  reminder TIMESTAMP NOT NULL
+  reminder TIMESTAMP NOT NULL,
+  is_important BOOLEAN NOT NULL DEFAULT FALSE,
+  document BYTEA
 );
 
 CREATE TABLE pa_users_events (
