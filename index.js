@@ -62,10 +62,10 @@ app.get(
 app.patch("/stateNotification", notificationController.stateNotification);
 
 app.get("/userViewEvents", userEventController.userViewEvents);
-app.delete("/deleteUserEvent", userEventController.deleteUserEvent);
 app.get("/getEvents", userEventController.viewEvents);
 app.get("/getParticipant", userEventController.viewParticipants);
 app.patch("/starredEvent", userEventController.starredEvent);
+app.delete("/deleteUserEvent", userEventController.deleteUserEvent);
 
 app.post("/createAttendance", userEventController.createAttendance);
 

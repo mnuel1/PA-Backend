@@ -34,21 +34,17 @@ const userViewEvents = expressAsyncHandler(async (req, res) => {
       const events = queryResult.rows;
       res.status(200).json({ title: "Success", events });
     } else {
-      res
-        .status(404)
-        .json({
-          title: "No events found",
-          message: "No events assigned to the user.",
-        });
+      res.status(404).json({
+        title: "No events found",
+        message: "No events assigned to the user.",
+      });
     }
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        title: "Something went wrong",
-        message: "Failed to fetch events.",
-      });
+    res.status(500).json({
+      title: "Something went wrong",
+      message: "Failed to fetch events.",
+    });
   }
 });
 
@@ -64,46 +60,47 @@ const viewEvents = expressAsyncHandler(async (req, res) => {
       const events = queryResult.rows;
       res.status(200).json({ title: "Success", events });
     } else {
-      res
-        .status(500)
-        .json({
-          title: "Something went wrong.",
-          message: "Please try again later.",
-        });
+      res.status(500).json({
+        title: "Something went wrong.",
+        message: "Please try again later.",
+      });
     }
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        title: "Something went wrong",
-        message: "Failed to fetch events.",
-      });
+    res.status(500).json({
+      title: "Something went wrong",
+      message: "Failed to fetch events.",
+    });
   }
 });
 
 const deleteUserEvent = expressAsyncHandler(async (req, res) => {
-  try {
-    const { user_id, event_id } = req.body;
+  console.log("DELETE /deleteUserEvent route hit");
+  const { user_id, event_id } = req.query;
+  console.log("user_id:", user_id, "event_id:", event_id);
 
-    // Perform the deletion from pa_users_events table
-    await connection.query(
-      `DELETE FROM pa_users_events WHERE user_id = $1 AND event_id = $2`,
-      [user_id, event_id]
-    );
-
-    res
-      .status(200)
-      .json({ title: "Success", message: "User deleted from the event." });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({
-        title: "Something went wrong",
-        message: "Failed to delete user from the event.",
-      });
-  }
+  connection.query(
+    `DELETE FROM pa_users_events 
+       WHERE user_id = $1 AND event_id = $2`,
+    [user_id, event_id],
+    (err, result) => {
+      if (err) {
+        console.error("Error removing user event:", err);
+        res.status(500).json({
+          title: "Something went wrong",
+          message: "Removing user event failed. Please try again later.",
+        });
+      } else if (result.rowCount > 0) {
+        res
+          .status(200)
+          .json({ title: "Success", message: "User event removed" });
+      } else {
+        res
+          .status(404)
+          .json({ title: "Not found", message: "User event not found" });
+      }
+    }
+  );
 });
 
 const viewParticipants = expressAsyncHandler(async (req, res) => {
@@ -129,21 +126,17 @@ const viewParticipants = expressAsyncHandler(async (req, res) => {
       const users = queryResult.rows;
       res.status(200).json({ title: "Success", users });
     } else {
-      res
-        .status(500)
-        .json({
-          title: "Something went wrong.",
-          message: "Please try again later.",
-        });
+      res.status(500).json({
+        title: "Something went wrong.",
+        message: "Please try again later.",
+      });
     }
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        title: "Something went wrong",
-        message: "Failed to fetch participants.",
-      });
+    res.status(500).json({
+      title: "Something went wrong",
+      message: "Failed to fetch participants.",
+    });
   }
 });
 
@@ -157,12 +150,10 @@ const starredEvent = expressAsyncHandler(async (req, res) => {
       [user_id, event_id, starred],
       (err, result) => {
         if (err) {
-          res
-            .status(500)
-            .json({
-              title: "Something went wrong.",
-              message: "Please try again later.",
-            });
+          res.status(500).json({
+            title: "Something went wrong.",
+            message: "Please try again later.",
+          });
         } else {
           res.status(200).json({ title: "Success" });
         }
@@ -170,12 +161,10 @@ const starredEvent = expressAsyncHandler(async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        title: "Something went wrong",
-        message: "Failed to fetch participants.",
-      });
+    res.status(500).json({
+      title: "Something went wrong",
+      message: "Failed to fetch participants.",
+    });
   }
 });
 
@@ -224,21 +213,19 @@ const createAttendance = expressAsyncHandler(async (req, res) => {
       );
     } catch (error) {
       console.error(error);
-      res
-        .status(500)
-        .json({
-          title: "Something went wrong",
-          message: "Failed to fetch participants.",
-        });
+      res.status(500).json({
+        title: "Something went wrong",
+        message: "Failed to fetch participants.",
+      });
     }
   });
 });
 
 module.exports = {
   viewEvents,
+  deleteUserEvent,
   viewParticipants,
   userViewEvents,
   starredEvent,
   createAttendance,
-  deleteUserEvent,
 };
