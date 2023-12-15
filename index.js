@@ -62,6 +62,7 @@ app.get(
 app.patch("/stateNotification", notificationController.stateNotification);
 
 app.get("/userViewEvents", userEventController.userViewEvents);
+app.delete("/deleteUserEvent", userEventController.deleteUserEvent);
 app.get("/getEvents", userEventController.viewEvents);
 app.get("/getParticipant", userEventController.viewParticipants);
 app.patch("/starredEvent", userEventController.starredEvent);
@@ -84,98 +85,106 @@ app.delete("/removeParticipant", adminEventController.removeParticipant);
 app.patch("/updateAttendee", adminEventController.presentAbsentAttendee);
 app.get("/getAttendees", adminEventController.getAttendees);
 
+app.get("/getPresents", adminEventController.getPresents);
+app.get("/getAbsents", adminEventController.getAbsents);
 
-app.get('/getPresents',adminEventController.getPresents)
-app.get('/getAbsents',adminEventController.getAbsents)
+app.get("/retrieveAdmin/:id", adminController.retrieveAdmin);
+app.get("/retrieveUser/:id", userController.retrieveUser);
 
-app.get('/retrieveAdmin/:id',adminController.retrieveAdmin)
-app.get('/retrieveUser/:id',userController.retrieveUser)
-
-app.get('/adminImage/:id', async (req, res) => {
+app.get("/adminImage/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await connection.query('SELECT image FROM pa_admin WHERE id = $1', [id]);
+    const result = await connection.query(
+      "SELECT image FROM pa_admin WHERE id = $1",
+      [id]
+    );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Image not found' });
+      return res.status(404).json({ error: "Image not found" });
     }
     const { filename, image } = result.rows[0];
 
-    res.set('Content-Type', 'image/*');
-    
+    res.set("Content-Type", "image/*");
+
     res.send(image);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.get('/userImage/:id', async (req, res) => {
+app.get("/userImage/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await connection.query('SELECT image FROM pa_users WHERE id = $1', [id]);
+    const result = await connection.query(
+      "SELECT image FROM pa_users WHERE id = $1",
+      [id]
+    );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Image not found' });
+      return res.status(404).json({ error: "Image not found" });
     }
     const { filename, image } = result.rows[0];
-        
-    res.set('Content-Type', 'image/*');
-    
-   
+
+    res.set("Content-Type", "image/*");
+
     res.send(image);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.get('/attendanceImage/:id', async (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+app.get("/attendanceImage/:id", async (req, res) => {
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, private"
+  );
   const { id } = req.params;
-  
+
   try {
-    const result = await connection.query('SELECT image FROM pa_users_attendance WHERE id = $1', [id]);
+    const result = await connection.query(
+      "SELECT image FROM pa_users_attendance WHERE id = $1",
+      [id]
+    );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Image not found' });
+      return res.status(404).json({ error: "Image not found" });
     }
     const { filename, image } = result.rows[0];
-        
-    res.set('Content-Type', 'image/*');
-       
-    res.send(image);
 
+    res.set("Content-Type", "image/*");
+
+    res.send(image);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.get('/file/:id', async (req,res) => {
-
-  const {id} = req.params;
+app.get("/file/:id", async (req, res) => {
+  const { id } = req.params;
 
   try {
-    const result = await connection.query('SELECT document FROM pa_events WHERE id = $1',
-    [id])
+    const result = await connection.query(
+      "SELECT document FROM pa_events WHERE id = $1",
+      [id]
+    );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'document not found' });
+      return res.status(404).json({ error: "document not found" });
     }
     const { document } = result.rows[0];
-        
+
     // Send the document as a response
-    res.setHeader('Content-disposition', `attachment; filename=file`);
-    res.setHeader('Content-type', 'application/pdf');
+    res.setHeader("Content-disposition", `attachment; filename=file`);
+    res.setHeader("Content-type", "application/pdf");
     res.send(document);
-       
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
-})
-
+});
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
