@@ -3,7 +3,7 @@ const connection = require("../configs/connection");
 require("dotenv").config();
 
 const sendNotification = expressAsyncHandler(
-  async (user_idsArray, event_id, read, message, comment, res) => {
+  async (user_idsArray, event_id, read, message, comment, callback) => {
     try {
       // Fetch the is_important value from pa_events table
       const eventResult = await connection.query(
@@ -31,16 +31,16 @@ const sendNotification = expressAsyncHandler(
           );
         }
 
-        res.status(200).json({ title: "Successful.", message: "Congrats." });
+        // Call the callback function with the success response
+        callback({ title: "Successful.", message: "Congrats." });
       } else {
-        res.status(404).json({
-          title: "Not Found",
-          message: "Event not found.",
-        });
+        // Call the callback function with the not found response
+        callback({ title: "Not Found", message: "Event not found." });
       }
     } catch (err) {
       console.error(err.message);
-      res.status(500).json({
+      // Call the callback function with the error response
+      callback({
         title: "Something went wrong.",
         message: "Please try again later.",
       });

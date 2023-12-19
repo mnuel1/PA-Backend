@@ -25,16 +25,20 @@ const addParticipant = expressAsyncHandler(async (req, res) => {
           message: "Adding participants failed. Please try again later.",
         });
       } else {
+        console.log("User ids in Create: ", user_idsArray);
         sendNotification(
           user_idsArray,
           event_id,
           false,
           `We are inviting you to join us!
-                    Event: ${event_title}
-                    Date: ${datetime}
-                    Location: ${location}`,
+            Event: ${event_title}
+            Date: ${datetime}
+            Location: ${location}`,
           "",
-          res
+          (notificationResponse) => {
+            // Send the response to the client
+            res.status(200).json(notificationResponse);
+          }
         );
         // res.status(200).json({ title: 'Success', message: 'Participants added' });
       }
@@ -43,35 +47,86 @@ const addParticipant = expressAsyncHandler(async (req, res) => {
 });
 
 const updateParticipant = expressAsyncHandler(async (req, res) => {
-  const { user_ids, event_id } = req.body;
+  const { user_ids, event_id, event_title, datetime, location } = req.body;
   const user_idsArray = user_ids.split(",").map((id) => id.trim());
 
   try {
     // Begin the transaction
     await connection.query("BEGIN");
 
-    // Step 1: Delete existing records for the given event_id
-    await connection.query("DELETE FROM pa_users_events WHERE event_id = $1", [
-      event_id,
-    ]);
-
-    // Step 2: Insert new records based on the provided user_ids and event_id
-    const user_idPlaceholders = user_idsArray
-      .map((_, index) => `($${index + 1}, $${user_idsArray.length + 1})`)
-      .join(", ");
-    const queryValues = [].concat(...user_idsArray, event_id);
-
-    await connection.query(
-      `INSERT INTO pa_users_events (user_id, event_id) VALUES ${user_idPlaceholders}`,
-      queryValues
+    // Step 1: Fetch existing participants for the given event_id
+    const existingParticipantsResult = await connection.query(
+      "SELECT user_id FROM pa_users_events WHERE event_id = $1",
+      [event_id]
     );
 
-    // Commit the transaction if everything is successful
-    await connection.query("COMMIT");
+    // Extract user IDs of existing participants
+    const existingParticipants = existingParticipantsResult.rows.map((row) =>
+      row.user_id.toString()
+    );
 
-    res
-      .status(200)
-      .json({ title: "Success", message: "Participants updated successfully" });
+    console.log("Existing User ids in Update: ", existingParticipants);
+
+    // Step 2: Delete records for participants that are no longer in the updated list
+    const participantsToRemove = existingParticipants.filter(
+      (userId) => !user_idsArray.includes(userId)
+    );
+
+    if (participantsToRemove.length > 0) {
+      const removePlaceholders = participantsToRemove
+        .map((_, index) => `$${index + 1}`)
+        .join(", ");
+
+      await connection.query(
+        `DELETE FROM pa_users_events WHERE user_id IN (${removePlaceholders}) AND event_id = $${
+          participantsToRemove.length + 1
+        }`,
+        [...participantsToRemove, event_id]
+      );
+      await deleteNotifications(participantsToRemove, event_id);
+      console.log("Participants removed:", participantsToRemove);
+    }
+
+    // Step 3: Insert new records based on the provided user_ids and event_id
+    const newParticipants = user_idsArray.filter(
+      (userId) => !existingParticipants.includes(userId)
+    );
+    console.log("New User ids in Update: ", newParticipants);
+
+    if (newParticipants.length > 0) {
+      const user_idPlaceholders = newParticipants
+        .map((_, index) => `($${index + 1}, $${newParticipants.length + 1})`)
+        .join(", ");
+      const queryValues = [].concat(...newParticipants, event_id);
+
+      await connection.query(
+        `INSERT INTO pa_users_events (user_id, event_id) VALUES ${user_idPlaceholders}`,
+        queryValues
+      );
+
+      // Call the sendNotification function with a callback for handling the response
+      sendNotification(
+        newParticipants,
+        event_id,
+        false,
+        `We are inviting you to join us!
+          Event: ${event_title}
+          Date: ${datetime}
+          Location: ${location}`,
+        "",
+        (notificationResponse) => {
+          // Commit the transaction if everything is successful
+          connection.query("COMMIT", () => {
+            // Send the response to the client
+            res.status(200).json(notificationResponse);
+          });
+        }
+      );
+    } else {
+      // If there are no new participants, commit the transaction
+      await connection.query("COMMIT");
+      res.status(200).json({ title: "Success", message: "No changes" });
+    }
   } catch (error) {
     await connection.query("ROLLBACK");
     console.error("Error updating participants:", error);
@@ -96,7 +151,7 @@ const removeParticipant = expressAsyncHandler(async (req, res) => {
       user_ids.length + 1
     }`,
     [...user_ids, event_id],
-    (err, result) => {
+    async (err, result) => {
       if (err) {
         console.error("Error removing participants:", err);
         res.status(500).json({
@@ -104,6 +159,9 @@ const removeParticipant = expressAsyncHandler(async (req, res) => {
           message: "Removing participants failed. Please try again later.",
         });
       } else {
+        // Call a function to delete associated notifications
+        await deleteNotifications(user_ids, event_id);
+
         res
           .status(200)
           .json({ title: "Success", message: "Participants removed" });
@@ -111,6 +169,34 @@ const removeParticipant = expressAsyncHandler(async (req, res) => {
     }
   );
 });
+
+const deleteNotifications = async (user_ids, event_id) => {
+  try {
+    // Ensure user_ids is an array
+    const user_idsArray = Array.isArray(user_ids) ? user_ids : [user_ids];
+    // console.log("User ids in Delete: ", user_idsArray);
+
+    // Convert the user_ids array to a string with placeholders for the query
+    const user_idPlaceholders = user_idsArray
+      .map((_, index) => `$${index + 1}`)
+      .join(", ");
+
+    // Delete notifications for the specified user_ids and event_id
+    await connection.query(
+      `DELETE FROM pa_users_notification 
+      WHERE user_id IN (${user_idPlaceholders}) AND event_id = $${
+        user_idsArray.length + 1
+      }`,
+      [...user_idsArray, event_id]
+    );
+
+    console.log("User ids in Delete: ", user_idsArray);
+
+    console.log("Notifications deleted for users:", user_idsArray);
+  } catch (error) {
+    console.error("Error deleting notifications:", error);
+  }
+};
 
 const createEvent = expressAsyncHandler(async (req, res) => {
   const {
@@ -123,6 +209,18 @@ const createEvent = expressAsyncHandler(async (req, res) => {
     is_important,
     document,
   } = req.body;
+
+  console.log("Data:", {
+    event,
+    description,
+    datetime,
+    location,
+    reminder,
+    participants,
+    is_important,
+    document,
+  });
+
   connection.query(
     `INSERT INTO pa_events (event, description, dateTime, location, reminder, is_important, document) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
     [event, description, datetime, location, datetime, is_important, document],
@@ -149,7 +247,6 @@ const createEvent = expressAsyncHandler(async (req, res) => {
       }
     }
   );
-  console.log("Important: ", is_important);
 });
 
 const editEvent = expressAsyncHandler(async (req, res) => {
@@ -164,6 +261,17 @@ const editEvent = expressAsyncHandler(async (req, res) => {
     is_important,
     document,
   } = req.body;
+
+  console.log("Edit Data:", {
+    event,
+    description,
+    datetime,
+    location,
+    reminder,
+    participants,
+    is_important,
+    document,
+  });
 
   connection.query(
     `UPDATE pa_events 
