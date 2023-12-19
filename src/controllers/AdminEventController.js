@@ -127,6 +127,13 @@ const updateParticipant = expressAsyncHandler(async (req, res) => {
       await connection.query("COMMIT");
       res.status(200).json({ title: "Success", message: "No changes" });
     }
+    await updateNotifications(
+      existingParticipants,
+      event_id,
+      event_title,
+      datetime,
+      location
+    );
   } catch (error) {
     await connection.query("ROLLBACK");
     console.error("Error updating participants:", error);
@@ -169,6 +176,47 @@ const removeParticipant = expressAsyncHandler(async (req, res) => {
     }
   );
 });
+
+const updateNotifications = async (
+  user_ids,
+  event_id,
+  event_title,
+  datetime,
+  location
+) => {
+  try {
+    // Convert the user_ids array to a string with placeholders for the query
+    const user_idPlaceholders = user_ids
+      .map((_, index) => `$${index + 2}`) // Start index from 2 to match the query parameters
+      .join(", ");
+
+    // Update notifications for the specified user_ids and event_id
+    await connection.query(
+      `UPDATE pa_users_notification 
+      SET message = $1 
+      WHERE user_id IN (${user_idPlaceholders}) AND event_id = $${
+        user_ids.length + 2
+      }`,
+      [
+        createNotificationMessage(event_title, datetime, location),
+        ...user_ids,
+        event_id,
+      ]
+    );
+
+    console.log("User ids in Update Notifications: ", user_ids);
+    console.log("Notifications updated for users:", user_ids);
+  } catch (error) {
+    console.error("Error updating notifications:", error);
+  }
+};
+
+const createNotificationMessage = (event_title, datetime, location) => {
+  return `We are inviting you to join us!
+    Event: ${event_title}
+    Date: ${datetime}
+    Location: ${location}`;
+};
 
 const deleteNotifications = async (user_ids, event_id) => {
   try {
