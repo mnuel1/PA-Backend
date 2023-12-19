@@ -46,6 +46,7 @@ app.post("/register", userController.Register);
 app.get("/retrieveVUsers", userController.retrieveVerifiedUsers);
 app.get("/retrieveNVUsers", userController.retrieveNotVerifiedUsers);
 app.patch("/editUser", userController.editUser);
+app.delete("/deleteUser", userController.deleteUser);
 
 app.patch("/verify", verificationController.Verified);
 
