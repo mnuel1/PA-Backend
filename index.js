@@ -137,27 +137,25 @@ app.get("/userImage/:id", async (req, res) => {
   }
 });
 
-app.get("/attendanceImage/:id", async (req, res) => {
+app.get("/attendanceImage/:user_id", async (req, res) => {
   res.setHeader(
     "Cache-Control",
     "no-store, no-cache, must-revalidate, private"
   );
-  const { id } = req.params;
+  const { user_id } = req.params;
 
   try {
     const result = await connection.query(
-      "SELECT image FROM pa_users_attendance WHERE id = $1",
-      [id]
+      "SELECT image FROM pa_users_attendance WHERE user_id = $1",
+      [user_id]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Image not found" });
     }
-    const { filename, image } = result.rows[0];
+    const { image } = result.rows[0];
 
-    res.set("Content-Type", "image/*");
-
-    res.send(image);
+    res.json({ image: "/" + image });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });

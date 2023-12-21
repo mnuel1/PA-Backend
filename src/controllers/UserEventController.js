@@ -3,7 +3,14 @@ const connection = require("../configs/connection");
 require("dotenv").config();
 
 const multer = require("multer");
-const storage = multer.memoryStorage();
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
 
 const upload = multer({ storage: storage });
 
@@ -171,52 +178,50 @@ const starredEvent = expressAsyncHandler(async (req, res) => {
 const createAttendance = expressAsyncHandler(async (req, res) => {
   // Use 'upload.single' middleware to handle the file upload
   upload.single("image")(req, res, async (err) => {
-    if (err) {
+    if (err instanceof multer.MulterError) {
       return res
         .status(500)
         .json({ title: "Internal Error", message: "Image upload failed." });
     } else {
-      console.log("there it is");
-    }
+      try {
+        const { user_id, events_id, comments, attend } = req.body;
+        const imagePath = req.file ? req.file.path : null;
+        console.log("imagePath:", imagePath);
 
-    try {
-      const { user_id, events_id, comments, attend, image } = req.body;
-
-      const imagePath = image ? image : null;
-
-      connection.query(
-        `DELETE FROM pa_users_attendance WHERE user_id = $1 AND event_id = $2`,
-        [user_id, events_id],
-        (deleteErr, deleteResult) => {
-          if (deleteErr) {
-            return res.status(500).json({
-              title: "Something went wrong.",
-              message: "Failed to delete existing data.",
-            });
-          }
-          connection.query(
-            `INSERT INTO pa_users_attendance 
-                        (user_id, event_id, comments, attend, image) VALUES ($1, $2, $3, $4, $5)`,
-            [user_id, events_id, comments, false, imagePath],
-            (insertErr, insertResult) => {
-              if (insertErr) {
-                return res.status(500).json({
-                  title: "Something went wrong.",
-                  message: "Failed to insert new data.",
-                });
-              }
-
-              res.status(200).json({ title: "Success" });
+        connection.query(
+          `DELETE FROM pa_users_attendance WHERE user_id = $1 AND event_id = $2`,
+          [user_id, events_id],
+          (deleteErr, deleteResult) => {
+            if (deleteErr) {
+              return res.status(500).json({
+                title: "Something went wrong.",
+                message: "Failed to delete existing data.",
+              });
             }
-          );
-        }
-      );
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({
-        title: "Something went wrong",
-        message: "Failed to fetch participants.",
-      });
+            connection.query(
+              `INSERT INTO pa_users_attendance 
+                          (user_id, event_id, comments, attend, image) VALUES ($1, $2, $3, $4, $5)`,
+              [user_id, events_id, comments, false, imagePath],
+              (insertErr, insertResult) => {
+                if (insertErr) {
+                  return res.status(500).json({
+                    title: "Something went wrong.",
+                    message: "Failed to insert new data.",
+                  });
+                }
+
+                res.status(200).json({ title: "Success" });
+              }
+            );
+          }
+        );
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({
+          title: "Something went wrong",
+          message: "Failed to fetch participants.",
+        });
+      }
     }
   });
 });
