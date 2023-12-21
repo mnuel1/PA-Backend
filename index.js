@@ -20,6 +20,7 @@ app.use(morgan("tiny"));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static("uploads"));
 
 const multer = require("multer");
 
@@ -35,7 +36,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 app.post("/upload", upload.single("file"), (req, res) => {
-  res.json({ message: "File uploaded successfully" });
+  const filePath = req.file.path.replace(/\\/g, "/");
+  res.json({
+    message: "File uploaded successfully",
+    filePath: filePath.replace(/\//g, "\\"),
+  });
 });
 
 app.post("/adminlogin", adminController.AdminLogin);
@@ -103,11 +108,9 @@ app.get("/adminImage/:id", async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Image not found" });
     }
-    const { filename, image } = result.rows[0];
+    const { image } = result.rows[0];
 
-    res.set("Content-Type", "image/*");
-
-    res.send(image);
+    res.json({ image: "/" + image });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
@@ -125,11 +128,9 @@ app.get("/userImage/:id", async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Image not found" });
     }
-    const { filename, image } = result.rows[0];
+    const { image } = result.rows[0];
 
-    res.set("Content-Type", "image/*");
-
-    res.send(image);
+    res.json({ image: "/" + image });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
