@@ -166,16 +166,16 @@ const retrieveNotVerifiedUsers = expressAsyncHandler(async (req, res) => {
 const editUser = expressAsyncHandler(async (req, res) => {
   // Use 'upload.single' middleware to handle the file upload
   upload.single("image")(req, res, async (err) => {
-    if (err) {
+    if (err instanceof multer.MulterError) {
       return res
         .status(500)
         .json({ title: "Internal Error", message: "Image upload failed." });
     } else {
-      console.log("there it is");
+      console.log(req.body);
     }
 
-    const { user_id, username, email, contact, image } = req.body;
-    const imagePath = image.uri ? image.uri : null;
+    const { user_id, username, email, contact } = req.body;
+    const imagePath = req.file ? req.file.path : null;
 
     validateUserData(req, res, async () => {
       try {
